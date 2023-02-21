@@ -277,12 +277,20 @@ class TransformerTrainer(object):
 
 if __name__ == '__main__':
     # res = TransformerTrainer(wind_size=6, pred_step=3, data_type='us', seed=3, layer_num=2).start(display=True)
-    res_list = []
+    mse_res_list = []
+    mae_res_list = []
+    mape_res_list = []
     for pred_step in [1, 3, 6]:
         for data_type in ['us']:
             for wind_size in [6, 9, 12]:
                 res = TransformerTrainer(wind_size=wind_size, pred_step=pred_step, data_type=data_type, seed=3).start(display=False)
-                res_list.append(res[0]) # mse
+                mse_res_list.append(res[0])  # mse
+                mae_res_list.append(res[1])  # mae
+                mape_res_list.append(res[2])  # mape
+
+    print(f'MSE: {[mse_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAE: {[mae_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAPE: {[mape_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
 
 
 

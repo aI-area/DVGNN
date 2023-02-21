@@ -13,7 +13,6 @@ import torch
 import torch.nn as nn
 from torch.nn import Parameter
 
-
 class Model(nn.Module):
     def __init__(self,
                  node_num,
@@ -205,11 +204,17 @@ if __name__ == '__main__':
   # for seed in range(10):
     print('seed = ', seed)
     mse_res_list = []
+    mae_res_list = []
     mape_res_list = []
     for pred_step in [1, 3, 6]:
         for data_type in ['us']:
             for wind_size in [6, 9, 12]:
                 res = LSTMTrainer(wind_size=wind_size, pred_step=pred_step, data_type=data_type, seed=seed, layer_num=2).start(display=False)
                 mse_res_list.append(res[0])  # mse
+                mae_res_list.append(res[1])  # mae
                 mape_res_list.append(res[2])  # mape
+
+    print(f'MSE: {[mse_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAE: {[mae_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAPE: {[mape_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
 

@@ -111,7 +111,7 @@ class VirtualGINTrainer(object):
         self.dataset = GlobalFlu(wind_size=wind_size, pred_step=pred_step, data_type=data_type, split_param=split_param)
         self.dataset.to_tensor()
         self.dataset.to_device(self.device)
-        self.adj = torch.full([self.dataset.node_size, self.dataset.node_size], 1, dtype=torch.float32).to(self.device)
+        self.adj = torch.full([self.dataset.node_size, self.dataset.node_size], 1/self.dataset.node_size, dtype=torch.float32).to(self.device)
 
         self.epochs = 200
         self.count = 0
@@ -128,7 +128,7 @@ class VirtualGINTrainer(object):
             in_channels=self.dataset.node_feature_size,
             out_channels=self.dataset.label_size,
             layer_num=self.layer_num,
-            momentum=0.8
+            momentum=0.9
         ).to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.best_res = 0
@@ -236,14 +236,20 @@ class VirtualGINTrainer(object):
 if __name__ == '__main__':
   for seed in [3]:
     mse_res_list = []
+    mae_res_list = []
     mape_res_list = []
     print('seed = ', seed)
     for pred_step in [1, 3, 6]:
         for data_type in ['us']:
             for wind_size in [6, 9, 12]:
-                res = VirtualGINTrainer(wind_size=wind_size, pred_step=pred_step, data_type=data_type, seed=seed, layer_num=4).start(display=True)
+                res = VirtualGINTrainer(wind_size=wind_size, pred_step=pred_step, data_type=data_type, seed=seed, layer_num=2).start(display=True)
                 mse_res_list.append(res[0])  # mse
+                mae_res_list.append(res[1])  # mae
                 mape_res_list.append(res[2])  # mape
+
+    print(f'MSE: {[mse_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAE: {[mae_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAPE: {[mape_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
 
 
 

@@ -25,7 +25,8 @@ current_path = osp.dirname(osp.realpath(__file__))
 max_ft_size = 12
 max_pred_size = 6
 china_ratio =  'global_flu/China_ILI.xlsx'
-us_ratio = 'global_flu/us_ratio.csv'
+# us_ratio = 'global_flu/us_ratio.csv'
+us_ratio = 'us_flu/us_ratio.csv'
 
 
 class GlobalFlu(object):
@@ -75,7 +76,8 @@ class GlobalFlu(object):
         # file_path = osp.join(current_path, every_52weeks_file)
         df = pd.read_csv(file_path)
         data_mat = df.to_numpy()
-        self.ft_mat = data_mat[:, 53 - wind_size:53]
+        # self.ft_mat = data_mat[:, 53 - wind_size:53]
+        self.ft_mat = data_mat[:, -wind_size-1:-1]
         one_step_label = data_mat[:, -1]
         self.label_mat = []
         for idx in range(0, one_step_label.shape[0]):

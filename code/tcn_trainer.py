@@ -126,7 +126,7 @@ class TCNTrainer(object):
         self.setup_seed(seed)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        print('TCN')
+        print('TCN', flush=True)
         self.dataset = GlobalFlu(wind_size=wind_size, pred_step=pred_step, data_type=data_type, split_param=split_param)
         self.dataset.to_tensor()
         self.dataset.to_device(self.device)
@@ -220,7 +220,7 @@ class TCNTrainer(object):
                   'MAPE: {:.4f}, Val: {:.4f}, Test: {:.4f}'.format(
             epoch, train_mse, valid_mse, test_mse, train_mae, valid_mae, test_mae, \
             train_mape, valid_mape, test_mape)
-        print(msg_log)
+        print(msg_log, flush=True)
 
     def start(self, topn=20, display=True):
         self.test_acc_list = []
@@ -237,12 +237,12 @@ class TCNTrainer(object):
                                  train_mape, valid_mape, test_mape]
                 self.best_res.append(epoch)
             if display:
-                mse_log = 'Epoch: {:03d}, MES Train: {:.4f}, Val: {:.4f}, Test: {:.4f}'
-                print(mse_log.format(epoch, train_mse, valid_mse, test_mse))
+                mse_log = 'Epoch: {:03d}, MSE Train: {:.4f}, Val: {:.4f}, Test: {:.4f}'
+                print(mse_log.format(epoch, train_mse, valid_mse, test_mse), flush=True)
                 mae_log = 'Epoch: {:03d}, MAE Train: {:.4f}, Val: {:.4f}, Test: {:.4f}'
-                print(mae_log.format(epoch, train_mae, valid_mae, test_mae))
+                print(mae_log.format(epoch, train_mae, valid_mae, test_mae), flush=True)
                 mape_log = 'Epoch: {:03d}, MAPE Train: {:.4f}, Val: {:.4f}, Test: {:.4f}'
-                print(mape_log.format(epoch, train_mape, valid_mape, test_mape))
+                print(mape_log.format(epoch, train_mape, valid_mape, test_mape), flush=True)
         self.print_best_res()
         train_mse, valid_mse, test_mse, train_mae, valid_mae, test_mae, \
         train_mape, valid_mape, test_mape, epoch = self.best_res
@@ -255,12 +255,19 @@ class TCNTrainer(object):
 if __name__ == '__main__':
 
     mse_res_list = []
+    mae_res_list = []
     mape_res_list = []
     for pred_step in [1, 3, 6]:
-        for data_type in ['us', 'ch_north', 'ch_south']:
+        # for data_type in ['us', 'ch_north', 'ch_south']:
+        for data_type in ['us']:
             for wind_size in [6, 9, 12]:
                 res = TCNTrainer(wind_size=wind_size, pred_step=pred_step, data_type=data_type, seed=3,
                                   ).start(display=True)
                 mse_res_list.append(res[0])  # mse
+                mae_res_list.append(res[1])  # mae
                 mape_res_list.append(res[2])  # mape
+
+    print(f'MSE: {[mse_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}', flush=True)
+    print(f'MAE: {[mae_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}', flush=True)
+    print(f'MAPE: {[mape_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}', flush=True)
 

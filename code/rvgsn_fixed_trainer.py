@@ -14,6 +14,8 @@ import torch.nn as nn
 from torch.nn import Parameter
 from tools.model_utils import get_laplace_mat
 
+from torch.optim.lr_scheduler import *
+
 
 class GCNConv(nn.Module):
     def __init__(self,
@@ -133,7 +135,8 @@ from tools.evaluate_utils import evaluate_regression
 
 class VirtualGCNTrainer(object):
     def __init__(self, wind_size=52, pred_step=1, layer_num=2, data_type='us', split_param=[0.6, 0.2, 0.2], seed=3,
-                 mlp_layer_num=2, gcn_layer_num=2, alpha=0):
+                 mlp_layer_num=2, gcn_layer_num=2, alpha=0, dropout=0.1, learning_rate=1e-3,
+                 gamma=0.9, decay_interval=20, epochs=200):
         self.setup_seed(seed)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -152,6 +155,9 @@ class VirtualGCNTrainer(object):
         self.pred_nums = None
         self.min_loss = 1e10
         self.batch_size = 30
+        self.learning_rate = learning_rate
+        self.gamma = gamma
+        self.decay_interval = decay_interval
         self.build_model()
 
     def build_model(self):
@@ -165,7 +171,8 @@ class VirtualGCNTrainer(object):
             dropout=0.3,
             bias=True
         ).to(self.device)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        self.scheduler = ExponentialLR(self.optimizer, gamma=self.gamma)
         self.best_res = 0
 
     def setup_seed(self, seed):
@@ -245,6 +252,10 @@ class VirtualGCNTrainer(object):
         self.test_acc_list = []
         for epoch in range(1, self.epochs):
             self.train()
+
+            if 0 != self.decay_interval and epoch % self.decay_interval == 0:
+                self.scheduler.step()
+
             train_mse, valid_mse, test_mse, train_mae, valid_mae, test_mae, \
             train_mape, valid_mape, test_mape, pred = self.test()
 
@@ -270,15 +281,46 @@ class VirtualGCNTrainer(object):
 if __name__ == '__main__':
   for seed in [3]:
     print('seed = ', seed)
-    mse_res_list = []
-    mape_res_list = []
-    for pred_step in [1, 3, 6]:
-        for data_type in ['us']:
-            for wind_size in [6, 9, 12]:
-                res = VirtualGCNTrainer(wind_size=wind_size, pred_step=pred_step, data_type=data_type, seed=seed,
-                                  layer_num=3).start(display=False)
-                mse_res_list.append(res[0])  # mse
-                mape_res_list.append(res[2])  # mape
+    res_list = []
 
+    res_list.append(VirtualGCNTrainer(
+        wind_size=6, pred_step=1, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.01, gamma=1.0, decay_interval=0
+    ).start(display=False))
+    res_list.append(VirtualGCNTrainer(
+        wind_size=9, pred_step=1, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.003, gamma=0.95, decay_interval=10
+    ).start(display=False))
+    res_list.append(VirtualGCNTrainer(
+        wind_size=12, pred_step=1, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.001, gamma=0.9, decay_interval=50
+    ).start(display=False))
+    res_list.append(VirtualGCNTrainer(
+        wind_size=6, pred_step=3, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.001, gamma=1.0, decay_interval=5
+    ).start(display=False))
+    res_list.append(VirtualGCNTrainer(
+        wind_size=9, pred_step=3, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.01, gamma=0.8, decay_interval=10
+    ).start(display=False))
+    res_list.append(VirtualGCNTrainer(
+        wind_size=12, pred_step=3, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.001, gamma=0.8, decay_interval=50
+    ).start(display=False))
+    res_list.append(VirtualGCNTrainer(
+        wind_size=6, pred_step=6, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.003, gamma=0.9, decay_interval=20
+    ).start(display=False))
+    res_list.append(VirtualGCNTrainer(
+        wind_size=9, pred_step=6, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.003, gamma=1.0, decay_interval=5
+    ).start(display=False))
+    res_list.append(VirtualGCNTrainer(
+        wind_size=12, pred_step=6, data_type='us', seed=seed, dropout=0.1,
+        gcn_layer_num=2, learning_rate=0.0003, gamma=0.8, decay_interval=5
+    ).start(display=False))
 
+    print(f'MSE: {[res[0] for res in res_list]}')
+    print(f'MAE: {[res[1] for res in res_list]}')
+    print(f'MAPE: {[res[2] for res in res_list]}')
 

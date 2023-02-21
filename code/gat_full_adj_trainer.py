@@ -305,16 +305,17 @@ class GATFullTrainer(object):
 
 
 if __name__ == '__main__':
-    res_list = []
-    for pred_step in [3, 6]:
+    mse_res_list = []
+    mae_res_list = []
+    mape_res_list = []
+    for pred_step in [1, 3, 6]:
         for data_type in ['us']:
             for wind_size in [6, 9, 12]:
                 res = GATFullTrainer(wind_size=wind_size, pred_step=pred_step, data_type=data_type, seed=3, layer=5).start(display=False)
-                res_list.append(res[0]) # mse
+                mse_res_list.append(res[0])  # mse
+                mae_res_list.append(res[1])  # mae
+                mape_res_list.append(res[2])  # mape
 
-    for idx in range(len(res_list)):
-        print(res_list[idx])
-        if (idx+1) % 3 == 0:
-            print()
-        if (idx + 1) % 9 == 0:
-            print()
+    print(f'MSE: {[mse_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAE: {[mae_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAPE: {[mape_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')

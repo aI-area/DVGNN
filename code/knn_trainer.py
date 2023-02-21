@@ -8,6 +8,8 @@ base Info
 __author__ = 'xx'
 __version__ = '1.0'
 
+import numpy as np
+import random
 from sklearn.neighbors import KNeighborsRegressor
 
 from tools.evaluate_utils import evaluate_regression
@@ -16,7 +18,8 @@ from sklearn.multioutput import MultiOutputRegressor
 
 
 class KNNTrainer(object):
-    def __init__(self, data_type='us', split_param=[0.6, 0.2, 0.2], wind_size=12, pred_step=1):
+    def __init__(self, data_type='us', split_param=[0.6, 0.2, 0.2], wind_size=12, pred_step=1, seed=3):
+        self.setup_seed(seed)
 
         self.n_neighbors = 4
         self.weights = 'uniform'
@@ -57,22 +60,27 @@ class KNNTrainer(object):
         mse, mae, mape = evaluate_regression(test_pred, test_label_mat)
         return mse, mae, mape
 
+    def setup_seed(self, seed):
+        np.random.seed(seed)
+        random.seed(seed)
+
 
 if __name__ == '__main__':
-    res_list = []
+    mse_res_list = []
+    mae_res_list = []
+    mape_res_list = []
     for pred_step in [1, 3, 6]:
         for data_type in ['us']:
             for wind_size in [6, 9, 12]:
                 res = KNNTrainer(wind_size=wind_size, pred_step=pred_step, data_type=data_type).start()
-                res_list.append(res[2]) # mse
+                # res_list.append(res[2])  # mse
+                mse_res_list.append(res[0])  # mse
+                mae_res_list.append(res[1])  # mae
+                mape_res_list.append(res[2])  # mape
 
-    # print(res_list)
-    for idx in range(len(res_list)):
-        print(res_list[idx])
-        if (idx+1) % 3 == 0:
-            print()
-        if (idx + 1) % 9 == 0:
-            print()
+    print(f'MSE: {[mse_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAE: {[mae_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
+    print(f'MAPE: {[mape_res_list[i] for i in [0, 3, 6, 1, 4, 7, 2, 5, 8]]}')
 
 
 
